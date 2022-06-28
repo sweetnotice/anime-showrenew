@@ -3,13 +3,13 @@ import requests
 from concurrent.futures import ThreadPoolExecutor
 import time
 import os
-import datetime
-from goto import with_goto
 import pyperclip
+
 
 def get_today_date():
     today_date = time.strftime('%m-%d')
     return today_date
+
 
 def get_links():
     with open(file, 'r+', encoding='utf-8') as f:
@@ -23,7 +23,7 @@ def get_links():
 
 def finish_anime_name_link():
     if len(finish_names) != 0:
-        show_finish_list = str(finish_names).replace("['", '').replace("']", '').replace("'", '').replace(',', '\n')
+        show_finish_list = str(finish_names).replace("['", '').replace("']", '').replace("'", '').replace(',', '\n').replace(' ','')
         delete = input(f'{show_finish_list}\n\n这 {len(finish_names)} 部 已完结是否要删除(y or n)')
         if delete == 'y':
             with open(file, 'r', encoding='utf-8') as f, open('./anime1.txt', 'w', encoding='utf-8') as f1:
@@ -31,15 +31,17 @@ def finish_anime_name_link():
                     if line.split('?')[0] not in finish_names:  # 把每一行和要删的列表进行匹配，如果没匹配到就写入,匹配到就输出
                         f1.write(line)
                     else:
-                        show_link = line.replace('?', ' ').replace('.html', '').replace('\n', '').replace('detail', 'play') + \
-                        '/sid/1/nid/1.html'
+                        show_link = line.replace('?', ' ').replace('.html', '').replace('\n', '').replace('detail',
+                                                                                                          'play') + \
+                                    '/sid/1/nid/1.html'
                         print(show_link)  # 直接把输出的链接变成第一集的链接
-                        show_link = line.split('?')[1].replace('.html', '').replace('\n', '').replace('detail', 'play') + \
-                        '/sid/1/nid/1.html'
+                        show_link = line.split('?')[1].replace('.html', '').replace('\n', '').replace('detail',
+                                                                                                      'play') + \
+                                    '/sid/1/nid/1.html'
                         # print(show_link)
                         time.sleep(0.6)
                         pyperclip.copy(show_link)
-            os.startfile('C:/Users/sweetnotice/PycharmProjects/pythonProject1/代码/爬/dist/异世界的最终形态(大概).exe')
+            os.startfile('./异世界动漫网下载器.exe')
             os.remove(file)
             os.rename('./anime1.txt', file)
 
@@ -53,11 +55,11 @@ def show_renew():
         # print(renew)
 
 
-def print_all_And_add_finish(url, filename,name_d):
+def print_all_And_add_finish(url, filename, name_d):
     global choose, cout
     today_date = get_today_date()
     try:
-        resp = requests.get(url, timeout=3).text
+        resp = requests.get(url, timeout=5).text
         count = obj_find_count_date.search(resp).group('count')  # 集数
         date = obj_find_count_date.search(resp).group('date')  # 更新日期
         name = obj_find_name.search(resp).group('name').strip()  # 番名
@@ -74,25 +76,27 @@ def print_all_And_add_finish(url, filename,name_d):
         return
 
 
-@with_goto
 def main():
     global cout, renew, finish_names
     get_link = get_links()
-    names,links = get_link[0],get_link[1]
+    names, links = get_link[0], get_link[1]
     name_d = max(map(len, names))
     # link_d = max(map(len, links))
 
-    label.begin
-    cout, renew, finish_names = 0, [], []
+    while 1:
+        try:
+            cout, renew, finish_names = 0, [], []
 
-    start = time.time()
-    with ThreadPoolExecutor(50) as f:
-        for name, link in zip(names, links):
-            f.submit(print_all_And_add_finish, link, name,name_d)
-    if cout != len(names):  # 判断访问的是否和追番列表数量一样
-        print("-----------运行超时-------------\n" * 4)
-        goto.begin
-
+            start = time.time()
+            with ThreadPoolExecutor(50) as f:
+                for name, link in zip(names, links):
+                    f.submit(print_all_And_add_finish, link, name, name_d)
+            if cout != len(names):  # 判断访问的是否和追番列表数量一样
+                print("-----------运行超时-------------\n" * 4)
+                raise
+            break
+        except RuntimeError:
+            pass
     print(f'共 {len(names)} 部\n')
     show_renew()  # 展示renew列表
     finish = time.time()

@@ -1,0 +1,1 @@
+程序路径=Tl9tM3U4REwtQ0xJX3YyLjkuOS5leGU=;保存路径=;代理=;请求头=dXNlci1hZ2VudDpNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvODYuMC40MjQwLjE5OCBTYWZhcmkvNTM3LjM2;删除临时文件=1;MP4混流边下边看=0;二进制合并=1;仅解析模式=0;不写入日期=1;最大线程=64;最小线程=16;重试次数=15;超时秒数=10;停止速度=200;最大速度=0;不合并=0;不使用系统代理=0;仅合并音频=0
