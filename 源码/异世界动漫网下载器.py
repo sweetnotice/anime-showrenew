@@ -22,13 +22,12 @@ def mkdir(path):  # 创建文件夹
 
 
 def config():
+    downloader_path = os.getcwd() + r'\N_m3u8DL-CLI_v2.9.9_with_ffmpeg_and_SimpleG\N_m3u8DL-CLI-SimpleG.exe'
     with open('config.txt', 'r', encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             if line.find('番剧下载路径=') != -1:
-                download_path = line.split('=')[1].replace('\n', '').replace('\\', '/') + '/'
-            if line.find('m3u8下载器路径=') != -1:
-                downloader_path = line.split('=')[1].replace('\n', '').replace('\\', '/') + '/N_m3u8DL-CLI-SimpleG.exe'
+                download_path = line.split('=')[1].replace('\n', '').replace('/', '\\') + '\\'
         if len(download_path) == 0 or len(downloader_path) == 0:
             download_path = False
     return downloader_path, download_path
@@ -106,7 +105,7 @@ if __name__ == '__main__':
             #     pa(url,i)
             if all_tt != 0:
                 os.startfile(first_dir)
-                print(m3u8_downloader)
+                # print(m3u8_downloader)
                 os.startfile(m3u8_downloader)
                 print(f'\n全部下载完成一共 {tt}/{all_tt} 个视频\n即有 {all_tt - tt} 个 PV & SP')
             else:

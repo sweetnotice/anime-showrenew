@@ -7,9 +7,9 @@ import pyperclip
 
 
 def config():  # 拿到下载器的地址
-    path1 = os.path.abspath(__file__).split('\\')[:-1]
-    path = '/'.join(path1) + '/异世界动漫网下载器.exe'
+    path = (os.getcwd() + r'\异世界动漫网下载器.exe')
     # print(path)
+    # os.startfile(path)
     return path
 
 
@@ -46,9 +46,9 @@ def finish_anime_name_link():
                         # print(show_link)
                         time.sleep(0.6)
                         pyperclip.copy(show_link)
-                os.startfile(downloader_path)
-                os.remove(file)
-                os.rename('./anime1.txt', file)
+            os.startfile(downloader_path)
+            os.remove(file)
+            os.rename('./anime1.txt', file)
 
 
 def show_anime_list():
@@ -133,4 +133,7 @@ if __name__ == '__main__':
     cout = 0
 
     main()
-    i = input('')
+    for i in range(11):
+        print(f'程序运行完毕将在 {10 - i} 秒后自动关闭', end='')
+        time.sleep(1)
+        print('\r', end='', flush=True)

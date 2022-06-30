@@ -1,2 +1,1 @@
 番剧下载路径=D:/桌面
-m3u8下载器路径=D:\桌面\anime-showrenew\N_m3u8DL-CLI_v2.9.9_with_ffmpeg_and_SimpleG
