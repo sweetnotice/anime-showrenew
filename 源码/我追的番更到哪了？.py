@@ -133,7 +133,7 @@ if __name__ == '__main__':
     cout = 0
 
     main()
-    for i in range(11):
-        print(f'程序运行完毕将在 {10 - i} 秒后自动关闭', end='')
+    for i in range(61):
+        print(f'程序运行完毕将在 {60 - i} 秒后自动关闭', end='')
         time.sleep(1)
         print('\r', end='', flush=True)
