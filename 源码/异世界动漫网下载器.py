@@ -2,6 +2,7 @@ import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 import requests
+import m3u8_downloader
 
 obj_title = re.compile(r'<title>(?P<title>.*?)(S|第|P|O).*?</title>', re.S)
 obj_name = re.compile(r'<title>(?P<name>.*?)</title>', re.S)
@@ -22,15 +23,20 @@ def mkdir(path):  # 创建文件夹
 
 
 def config():
-    downloader_path = os.getcwd() + r'\N_m3u8DL-CLI_v2.9.9_with_ffmpeg_and_SimpleG\N_m3u8DL-CLI-SimpleG.exe'
     with open('config.txt', 'r', encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             if line.find('番剧下载路径=') != -1:
                 download_path = line.split('=')[1].replace('\n', '').replace('/', '\\') + '\\'
-        if len(download_path) == 0 or len(downloader_path) == 0:
+            if line.find('下载线程数 (尽量不要超过5)') != -1:
+                try:
+                    thread = int(line.split('=')[1].replace('\n', ''))
+                except ValueError:
+                    print('线程数必须为数字！')
+                    return False
+        if len(download_path) == 0:
             download_path = False
-    return downloader_path, download_path
+    return download_path, thread
 
 
 def download(url, name):
@@ -47,7 +53,7 @@ def download(url, name):
 
 
 def pa(url, i):
-    global c, tt, all_tt
+    global c, tt, all_tt, download_path
     if c == 0:
         ual = url + str(i)
         rest = requests.get(ual)
@@ -58,6 +64,7 @@ def pa(url, i):
             replace(":", "").replace("/", "").replace('高清资源在线播放_新番 - 異世界動漫', '').strip()
         link = obj_link.search(rest.text).group("link").replace("\/", "/")
         film = first_dir + title  # 'E:/番/彩绿
+        download_path = film
         if len(link) != 0:
             if name.find("PV") == -1 and name.find("SP") == -1:
                 mkdir(film)
@@ -79,11 +86,11 @@ def pa(url, i):
 
 
 if __name__ == '__main__':
+    download_path = ''
     config = config()
-    downloader_path, first_dir = config[0], config[1]  # 从config文件中拿到 下载器路径 和 m3u8下载路径
-    if downloader_path and first_dir:
-        m3u8_downloader = downloader_path
-        print(f'm3u8下载路径为   {first_dir}\nm3u8下载器路径为   {m3u8_downloader}')
+    first_dir, thread = config[0], config[1]  # 从config文件中拿到 下载器路径 和 m3u8下载路径
+    if first_dir:
+        print(f'视频下载路径为   {first_dir}\n下载线程为   {thread}\n')
         while 1:
             baseual = input("---------在下方输入下载链接---------\n").strip()
             if len(baseual) == 0:
@@ -103,10 +110,8 @@ if __name__ == '__main__':
                     f.submit(pa, url, i)
             # for i in range(t,40):
             #     pa(url,i)
-            if all_tt != 0:
-                os.startfile(first_dir)
-                # print(m3u8_downloader)
-                os.startfile(m3u8_downloader)
+            if tt != 0:
+                m3u8_downloader.main(download_path,thread)
                 print(f'\n全部下载完成一共 {tt}/{all_tt} 个视频\n即有 {all_tt - tt} 个 PV & SP')
             else:
                 print('没有下载到内容，请检查输入链接是否正确！')
