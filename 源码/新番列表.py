@@ -5,6 +5,16 @@ import time
 import os
 
 
+def get_anime():
+    anime = []
+    with open('./anime.txt', 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+        for line in lines:
+            if line != '\n':
+                anime.append(line.replace('\n', ''))
+    return anime
+
+
 def main(url):
     resp = requests.get(url).text
     # print(resp)
@@ -17,8 +27,9 @@ def main(url):
             name = re_find.group('name')
             link = 'https://www.ysjdm.net/index.php/vod/detail/id/' + re_find.group('link')
             show = name + '?' + link
-            count += 1
-            print(show + f'\n{state}')
+            if show not in have_anime:
+                count += 1
+                print(show + f'\n{state}\n')
     print(f'\n{count}部')
 
 
@@ -27,5 +38,6 @@ if __name__ == '__main__':
     obj_state = re.compile(r'<span class="vodlist_sub">状态：(?P<state>.*?)</span></p>')  # 查找番剧当前状态  即是否完结
     url = 'https://www.ysjdm.net/index.php/map/index.html'
     count = 0
+    have_anime = get_anime()
     main(url)
     i = input()

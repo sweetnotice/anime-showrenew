@@ -23,8 +23,9 @@ def get_links():
         links = []
         name = []
         for line in f.readlines():
-            name.append(line.split('?')[0])
-            links.append(line.split('?')[1].replace('\n', '').replace('.html', '') + '.html')
+            if line != '\n':
+                name.append(line.split('?')[0])
+                links.append(line.split('?')[1].replace('\n', '').replace('.html', '') + '.html')
         return name, links
 
 
@@ -61,14 +62,16 @@ def show_renew():
     if len(renew) == 0:
         print('今日没有番更新')
     else:
-        print(f'今日更新的番为  这 {len(renew)} 部\n' + \
-              str(renew).replace("[", '').replace("]", '').replace(" '", '').replace("'", '').replace(",", '\n') + '\n')
+        print(f'今日更新的番为  这 {len(renew)} 部\n' + '\n'.join(renew) + '\n')
         # print(renew)
 
 
-def print_all_And_add_finish(url, filename, name_d):
+def get_all_And_add_finish(url, filename, name_d):
     global choose, cout, show_anime_lists
     show_anime_lists = []
+    urls = []
+    states = []
+    names = []
     today_date = get_today_date()
     try:
         resp = requests.get(url, timeout=2).text
@@ -79,9 +82,7 @@ def print_all_And_add_finish(url, filename, name_d):
             finish_names.append(filename)  # 加入列表的是本地文件里的名字
         if date == today_date:  # 检测今日更新
             renew.append(f'{count}  {name}')
-        # if len(name) < name_d//4:
-        #     name = name + ' '*len(name)
-        show_anime_lists.append(f'{url}  {count}/{date}     {name.center(name_d)}')  # 地址 集数/更新日期  名字
+        show_anime_lists.append(f'{url}\t\t{name.ljust(name_d)}\n{count}/{date}')  # 先把之后要打印的加入待打印列表  地址 名字  \n集数/更新日期
         cout += 1
         # print(cout)
     except requests.exceptions.RequestException:
@@ -98,11 +99,10 @@ def main():
     while 1:
         try:
             cout, renew, finish_names = 0, [], []
-
             start = time.time()
             with ThreadPoolExecutor(50) as f:
                 for name, link in zip(names, links):
-                    f.submit(print_all_And_add_finish, link, name, name_d)
+                    f.submit(get_all_And_add_finish, link, name, name_d)
             if count_retry >= 5:
                 print('当前网络情况不太好，请稍后再试')
                 return

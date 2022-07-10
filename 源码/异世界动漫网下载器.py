@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 import m3u8_downloader
 
-obj_title = re.compile(r'<title>(?P<title>.*?)(S|第|P|O).*?</title>', re.S)
+obj_title = re.compile(r'<title>(?P<title>.*?)(SP|第.*?集|PV|OVA).*?</title>', re.S)
 obj_name = re.compile(r'<title>(?P<name>.*?)</title>', re.S)
 obj_link = re.compile(r'","link_pre":.*?,"url":"(?P<link>.*?)","url_next":"', re.S)
 
@@ -76,19 +76,19 @@ def pa(url, i):
                 ual = url + str(i)
                 rest = requests.get(ual)
                 rest.encoding = "utf-8"
-                title = obj_title.search(rest.text).group("title"). \
-                    replace(":", "").replace("/", "").replace('高清资源在线播放_新番 - 異世界動漫', '').strip()
-                name = obj_name.search(rest.text).group("name"). \
-                    replace(":", "").replace("/", "").replace('高清资源在线播放_新番 - 異世界動漫', '').strip()
+                title = obj_title.search(rest.text).group("title").replace(":", "").replace("/", ""). \
+                    replace('高清资源在线播放_新番 - 異世界動漫', '').replace(' ', '').replace('\\', '')
+                name = obj_name.search(rest.text).group("name").replace(":", "").replace("/", ""). \
+                    replace('高清资源在线播放_新番 - 異世界動漫', '').replace(' ', '').replace('\\', '')
                 link = obj_link.search(rest.text).group("link").replace("\/", "/")
-                film = first_dir + title  # 'E:/番/彩绿
+                film = first_dir + title  # 'E:\番\彩绿
                 download_path = film
                 if len(link) != 0:
                     if name.find("PV") == -1 and name.find("SP") == -1:
                         mkdir(film)
                         if len(name) >= 45:
                             name = "第" + name.split("第")[1]
-                        video_file = film + '/' + name  # 'E:/番/彩绿/彩绿第5集BD'
+                        video_file = film + '\\' + name  # 'E:\番\彩绿\彩绿第5集BD'
                         if ".m3u8" in link:
                             video_file = video_file + '.m3u8'
                         elif ".mp4" in link:
