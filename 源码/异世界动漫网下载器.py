@@ -2,6 +2,7 @@ import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 import requests
+import winsound
 import m3u8_downloader
 
 obj_title = re.compile(r'<title>(?P<title>.*?)(SP|第.*?集|PV|OVA).*?</title>', re.S)
@@ -124,6 +125,7 @@ def main():
             m3u8_downloader.main(download_path, thread)
         else:
             print('没有下载到内容，请检查输入链接是否正确！')
+        winsound.MessageBeep(100)
 
 
 if __name__ == '__main__':

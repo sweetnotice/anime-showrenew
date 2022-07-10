@@ -11,7 +11,7 @@ def get_anime():
         lines = f.readlines()
         for line in lines:
             if line != '\n':
-                anime.append(line.replace('\n', ''))
+                anime.append(line.replace('\n', '').split('?')[1])
     return anime
 
 
@@ -26,8 +26,8 @@ def main(url):
             global count
             name = re_find.group('name')
             link = 'https://www.ysjdm.net/index.php/vod/detail/id/' + re_find.group('link')
-            show = name + '?' + link
-            if show not in have_anime:
+            if link not in have_anime:
+                show = name + '?' + link
                 count += 1
                 print(show + f'\n{state}\n')
     print(f'\n{count}部')
