@@ -58,12 +58,33 @@ def show_anime_list():
         print(i)
 
 
+def write_renew(txt):
+    file = './anime_renew.txt'
+    today_date = get_today_date()
+    with open(file, 'a+', encoding='utf-8') as f:
+        f.seek(0, 0)
+        lines = f.readlines()
+        file_long = len(lines)
+        w = open(file, 'w', encoding='utf-8')
+        for line, i in zip(lines, range(file_long)):
+            if line.replace('\n', '') == today_date:
+                for ii in range(i):
+                    w.write(lines[ii])
+                break
+        w.write(txt)
+        w.write('-' * 80 + '\n')
+        w.close()
+
+
 def show_renew():
     if len(renew) == 0:
         print('今日没有番更新')
     else:
+        today_date = get_today_date()
+        today_renew = f'{today_date}\n' + '\n'.join(renew) + '\n'
         print(f'今日更新的番为  这 {len(renew)} 部\n' + '\n'.join(renew) + '\n')
         # print(renew)
+        write_renew(today_renew)
 
 
 def get_all_And_add_finish(url, filename, name_d):
@@ -74,7 +95,7 @@ def get_all_And_add_finish(url, filename, name_d):
     names = []
     today_date = get_today_date()
     try:
-        resp = requests.get(url, timeout=2).text
+        resp = requests.get(url, timeout=5).text
         count = obj_find_count_date.search(resp).group('count')  # 集数
         date = obj_find_count_date.search(resp).group('date')  # 更新日期
         name = obj_find_name.search(resp).group('name').strip()  # 番名
