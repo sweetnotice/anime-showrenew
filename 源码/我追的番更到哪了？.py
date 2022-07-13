@@ -66,11 +66,11 @@ def write_renew(txt):
         lines = f.readlines()
         file_long = len(lines)
         w = open(file, 'w', encoding='utf-8')
-        for line, i in zip(lines, range(file_long)):
+        for line in lines:
             if line.replace('\n', '') == today_date:
-                for ii in range(i):
-                    w.write(lines[ii])
                 break
+            else:
+                w.write(line)
         w.write(txt)
         w.write('-' * 80 + '\n')
         w.close()
