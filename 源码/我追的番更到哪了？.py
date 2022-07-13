@@ -74,6 +74,24 @@ def write_renew(txt):
         w.write(txt)
         w.write('-' * 80 + '\n')
         w.close()
+        del_than_max()
+
+
+def del_than_max():
+    with open('anime_renew.txt', 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+        split = '-' * 80 + '\n'
+        cnt = lines.count(split)
+        Max = 4
+        if cnt > Max:
+            with open('anime_renew.txt', 'w+', encoding='utf-8') as ff:
+                del_num = cnt - Max  # 应该删掉几行
+                j = 0
+                for line in lines:
+                    if line == split and j < del_num:
+                        j += 1
+                    elif j >= del_num:
+                        ff.write(line)
 
 
 def show_renew():
