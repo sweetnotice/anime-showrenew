@@ -10,7 +10,7 @@ obj_name = re.compile(r'<title>(?P<name>.*?)</title>', re.S)
 obj_link = re.compile(r'","link_pre":.*?,"url":"(?P<link>.*?)","url_next":"', re.S)
 
 
-def set_t():
+def set_t():  # 设定开始集数
     while 1:
         t = input('从第几集开始 (如果是第一集开始直接按回车即可):')
         print('')
@@ -75,7 +75,7 @@ def pa(url, i):
         while 1:
             try:
                 ual = url + str(i)
-                rest = requests.get(ual)
+                rest = requests.get(ual, timeout=1)
                 rest.encoding = "utf-8"
                 title = obj_title.search(rest.text).group("title").replace(":", "").replace("/", ""). \
                     replace('高清资源在线播放_新番 - 異世界動漫', '').replace(' ', '').replace('\\', '')
@@ -107,15 +107,22 @@ def pa(url, i):
                 pass
 
 
+def change_url(url: str):  # 把用户输入的详情页链接转换成第一集的
+    if url.find('detail') != -1:
+        url = url.replace('detail', 'play').replace('.html', '') + '/sid/1/nid/1.html'
+    return url
+
+
 def main():
     print(f'视频下载路径为   {first_dir}\n下载线程为   {thread}')
     while 1:
         baseual = input("\n---------在下方输入下载链接---------\n").strip()
         if len(baseual) == 0:
             break
+        baseual = change_url(baseual)
         url = re.sub('/nid/.*', "/nid/", baseual)  # 使用正则转换成普通ual
         t = set_t()
-        with ThreadPoolExecutor(10) as f:
+        with ThreadPoolExecutor(5) as f:
             for i in range(t, 40):
                 f.submit(pa, url, i)
         # for i in range(t,40):

@@ -39,14 +39,13 @@ def finish_anime_name_link():
                     if line.split('?')[0] not in finish_names:  # 把每一行和要删的列表进行匹配，如果没匹配到就写入,匹配到就输出
                         f1.write(line)
                     else:
-                        show_link = line.replace('?', ' ').replace('.html', ''). \
-                                        replace('\n', '').replace('detail', 'play') + '/sid/1/nid/1.html'
-                        print(show_link)  # 直接把输出的链接变成第一集的链接
-                        show_link = line.split('?')[1].replace('.html', ''). \
-                                        replace('\n', '').replace('detail', 'play') + '/sid/1/nid/1.html'
+                        show_link = line.replace('?', ' ').replace('.html', '').replace('\n', '') + '.html'
+                        print(show_link)
+                        copy_link = line.split('?')[1].replace('.html', '').replace('\n', '').replace('detail', 'play') \
+                                    + '/sid/1/nid/1.html'  # 直接把输出的链接变成第一集的链接
                         # print(show_link)
                         time.sleep(0.6)
-                        pyperclip.copy(show_link)
+                        pyperclip.copy(copy_link)
             os.startfile(downloader_path)
             os.remove(file)
             os.rename('./anime1.txt', file)
