@@ -5,7 +5,7 @@ import requests
 import winsound
 import m3u8_downloader
 
-obj_title = re.compile(r'<title>(?P<title>.*?)(SP|第.*?集|PV|OVA).*?</title>', re.S)
+obj_title = re.compile(r'<title>(?P<title>.*?)(SP|第.*?集|PV|OVA|全集).*?</title>', re.S) #
 obj_name = re.compile(r'<title>(?P<name>.*?)</title>', re.S)
 obj_link = re.compile(r'","link_pre":.*?,"url":"(?P<link>.*?)","url_next":"', re.S)
 
