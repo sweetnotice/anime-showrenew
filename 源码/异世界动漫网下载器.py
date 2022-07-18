@@ -75,7 +75,7 @@ def pa(url, i):
         while 1:
             try:
                 ual = url + str(i)
-                rest = requests.get(ual, timeout=1)
+                rest = requests.get(ual, timeout=2)
                 rest.encoding = "utf-8"
                 title = obj_title.search(rest.text).group("title").replace(":", "").replace("/", ""). \
                     replace('高清资源在线播放_新番 - 異世界動漫', '').replace(' ', '').replace('\\', '')
