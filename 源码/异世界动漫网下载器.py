@@ -5,7 +5,7 @@ import requests
 import winsound
 import m3u8_downloader
 
-obj_title = re.compile(r'<title>(?P<title>.*?)(SP|第.*?集|PV|OVA|全集).*?</title>', re.S) #
+obj_title = re.compile(r'<title>(?P<title>.*?)(SP|第.*?集|PV|OVA|全集).*?</title>', re.S)  #
 obj_name = re.compile(r'<title>(?P<name>.*?)</title>', re.S)
 obj_link = re.compile(r'","link_pre":.*?,"url":"(?P<link>.*?)","url_next":"', re.S)
 
@@ -53,7 +53,13 @@ def config():
                     return False
         if len(download_path) == 0:
             download_path = False
-    return download_path, thread
+    with open('下载队列.txt', 'r', encoding='utf-8') as f:
+        download_list = []
+        lines = f.readlines()
+        for line in lines:
+            if line.find('https://www.ysjdm.net/') != -1:
+                download_list.append(line.replace('\n', ''))
+    return download_path, thread, download_list
 
 
 def download(url, name):
@@ -113,37 +119,53 @@ def change_url(url: str):  # 把用户输入的详情页链接转换成第一集
     return url
 
 
-def main():
+def launcher():
     print(f'视频下载路径为   {first_dir}\n下载线程为   {thread}')
-    while 1:
-        baseual = input("\n---------在下方输入下载链接---------\n").strip()
-        if len(baseual) == 0:
-            break
-        baseual = change_url(baseual)
-        url = re.sub('/nid/.*', "/nid/", baseual)  # 使用正则转换成普通ual
-        t = set_t()
-        with ThreadPoolExecutor(5) as f:
-            for i in range(t, 40):
-                f.submit(pa, url, i)
-        # for i in range(t,40):
-        #     pa(url,i)
-        if tt != 0:
-            print(f'\n获取文件完成一共 {tt}/{all_tt} 个视频\n即有 {all_tt - tt} 个 PV & SP')
-            m3u8_downloader.main(download_path, thread)
-        else:
-            print('没有下载到内容，请检查输入链接是否正确！')
+    if len(download_lists) == 0:
+        while 1:
+            baseurl = input("\n---------在下方输入下载链接---------\n").strip()
+            if len(baseurl) == 0:
+                return
+            t = set_t()
+            main(baseurl, t)
+            winsound.MessageBeep(100)
+    else:
+        for baseurl in download_lists:  # 队列下载
+            t = 1
+            main(baseurl, t)
+        with open('下载队列.txt', 'w') as f:
+            pass
         winsound.MessageBeep(100)
+        i = input('队列全部下载完成！！！')
+
+
+def main(baseurl, t):
+    global tt, all_tt
+    tt = 0
+    all_tt = 0
+    baseurl = change_url(baseurl)
+    url = re.sub('/nid/.*', "/nid/", baseurl)  # 使用正则转换成普通ual
+    with ThreadPoolExecutor(5) as f:
+        for i in range(t, 40):
+            f.submit(pa, url, i)
+    # for i in range(t,40):
+    #     pa(url,i)
+    if tt != 0:
+        print(f'\n获取文件完成一共 {tt}/{all_tt} 个视频\n即有 {all_tt - tt} 个 PV & SP')
+        m3u8_downloader.main(download_path, thread)
+    else:
+        print('没有下载到内容，请检查输入链接是否正确！')
 
 
 if __name__ == '__main__':
     download_path = ''
     config = config()
-    first_dir, thread = config[0], config[1]  # 从config文件中拿到 下载器路径 和 m3u8下载路径
+    first_dir, thread, download_lists = config[0], config[1], config[2]  # 从config文件中拿到 下载路径 , m3u8下载线程,下载列表
 
     state = 0
     all_tt = 0
     tt = 0  # 实际下载的视频数量
     if first_dir:
-        main()
+        launcher()
     else:
         input('请检查 config 里的 路径是否正确！！！')
