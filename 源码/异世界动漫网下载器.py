@@ -130,8 +130,10 @@ def launcher():
             main(baseurl, t)
             winsound.MessageBeep(100)
     else:
+        global state
         for baseurl in download_lists:  # 队列下载
             t = 1
+            state = 0
             main(baseurl, t)
         with open('下载队列.txt', 'w') as f:
             pass
