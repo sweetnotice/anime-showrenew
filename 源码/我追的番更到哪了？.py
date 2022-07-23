@@ -3,7 +3,9 @@ import requests
 from concurrent.futures import ThreadPoolExecutor
 import time
 import os
-import pyperclip
+
+head = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"}
 
 
 def config():  # 拿到下载器的地址
@@ -30,24 +32,28 @@ def get_links():
 
 
 def finish_anime_name_link():
-    if len(finish_names) != 0:
-        show_finish_list = '\n'.join(finish_names)
-        delete = input(f'{show_finish_list}\n\n这 {len(finish_names)} 部 已完结是否要删除(y or n)')
+    if len(finish_anime_urls) != 0:
+        show_finish_list = '\n'.join(finish_anime_urls)
+        delete = input(f'{show_finish_list}\n\n这 {len(finish_anime_urls)} 部 已完结是否要删除(y or n)')
         if delete == 'y':
             with open(file, 'r', encoding='utf-8') as f, open('./anime1.txt', 'w', encoding='utf-8') as f1:
                 for line in f.readlines():
-                    if line.split('?')[0] not in finish_names:  # 把每一行和要删的列表进行匹配，如果没匹配到就写入,匹配到就输出
-                        f1.write(line)
-                    else:
-                        show_link = line.replace('?', ' ').replace('.html', '').replace('\n', '') + '.html'
-                        print(show_link)
-                        copy_link = line.split('?')[1].replace('.html', '').replace('\n', '').replace('detail', 'play') \
-                                    + '/sid/1/nid/1.html'  # 第一集的链接
-                        # print(show_link)
-                        # time.sleep(0.6)
-                        # pyperclip.copy(copy_link)
-                        with open('下载队列.txt', 'a+') as f:
-                            f.write(f'\n{copy_link}\n')
+                    if line != '\n':
+                        # a = line.split('?')
+                        if line.split('?')[1].replace('\n',
+                                                      '') not in finish_anime_urls:  # 把每一行和要删的列表进行匹配，如果没匹配到就写入,匹配到就输出
+                            f1.write(line)
+                        else:
+                            show_link = line.replace('?', ' ').replace('.html', '').replace('\n', '') + '.html'
+                            print(show_link)
+                            copy_link = line.split('?')[1].replace('.html', '').replace('\n', '').replace('detail',
+                                                                                                          'play') \
+                                        + '/sid/1/nid/1.html'  # 第一集的链接
+                            # print(show_link)
+                            # time.sleep(0.6)
+                            # pyperclip.copy(copy_link)
+                            with open('下载队列.txt', 'a+') as f:
+                                f.write(f'\n{copy_link}\n')
             os.remove(file)
             os.rename('./anime1.txt', file)
             os.startfile(downloader_path)
@@ -106,22 +112,45 @@ def show_renew():
         write_renew(today_renew)
 
 
-def get_all_And_add_finish(url, filename, name_d):
-    global choose, cout, show_anime_lists
-    show_anime_lists = []
-    urls = []
-    states = []
-    names = []
-    today_date = get_today_date()
+def get_url_from_map(local_urls):
+    global show_anime_lists, cout
+    url = 'https://www.ysjdm.net/index.php/map/index.html'
+    resp = requests.get(url, headers=head, timeout=3).text
+    obj_today_anime = re.compile(
+        rf'<li class="ranklist_item">.*?<a title="(?P<title>.*?)".href="(?P<url>.*?)">.*?<p><span class="vodlist_sub">状态：(?P<cnt>.*?)</span></p>',
+        re.S)
+    obj_data = re.compile('<em>(?P<data>.*?)</em></span>')
+    gets = obj_today_anime.finditer(resp)
+    datas = obj_data.finditer(resp)
+    web_list = []
+    for get, data in zip(gets, datas):
+        link = 'https://www.ysjdm.net' + get.group('url').replace('.html', '') + '.html'
+        title = get.group('title')
+        cnt = get.group('cnt')
+        data = data.group('data')
+        if link in local_urls:
+            web_list.append(link)
+            show_anime_lists.append(f'{link}\t\t{title}\n{cnt}/{data}')
+            cout += 1
+            if cnt.find('已完结') != -1:
+                finish_anime_urls.append(link)  # 加入列表的是网站里的链接
+            if data == today_date:
+                renew.append(f'{cnt}\t{title}')
+    other_need_asks = set(local_urls) - set(web_list)
+    return other_need_asks
+
+
+def get_all_And_add_finish(url, name_d):
+    global cout
     try:
-        resp = requests.get(url, timeout=5).text
+        resp = requests.get(url, timeout=3).text
         count = obj_find_count_date.search(resp).group('count')  # 集数
         date = obj_find_count_date.search(resp).group('date')  # 更新日期
         name = obj_find_name.search(resp).group('name').strip()  # 番名
         if count.find('已完结') != -1:
-            finish_names.append(filename)  # 加入列表的是本地文件里的名字
+            finish_anime_urls.append(url)  # 加入列表的是本地文件里的网页链接
         if date == today_date:  # 检测今日更新
-            renew.append(f'{count}  {name}')
+            renew.append(f'{count}\t{name}')
         show_anime_lists.append(f'{url}\t\t{name.ljust(name_d)}\n{count}/{date}')  # 先把之后要打印的加入待打印列表  地址 名字  \n集数/更新日期
         cout += 1
         # print(cout)
@@ -130,19 +159,21 @@ def get_all_And_add_finish(url, filename, name_d):
 
 
 def main():
-    global cout, renew, finish_names
+    global cout, renew, finish_anime_urls, show_anime_lists
     get_link = get_links()
-    names, links = get_link[0], get_link[1]
+    names, links = get_link[0], get_link[1]  # 从本地anime获取番剧名字，链接
     name_d = max(map(len, names))
     # link_d = max(map(len, links))
+
     count_retry = 1
     while 1:
         try:
-            cout, renew, finish_names = 0, [], []
+            cout, renew, finish_anime_urls, show_anime_lists = 0, [], [], []
             start = time.time()
-            with ThreadPoolExecutor(50) as f:
-                for name, link in zip(names, links):
-                    f.submit(get_all_And_add_finish, link, name, name_d)
+            other_links = get_url_from_map(links)  # 从最近更新页面获取
+            with ThreadPoolExecutor(10) as f:
+                for link in other_links:
+                    f.submit(get_all_And_add_finish, link, name_d)
             if count_retry >= 5:
                 print('当前网络情况不太好，请稍后再试')
                 return
@@ -168,12 +199,13 @@ if __name__ == '__main__':
     obj_find_name = re.compile(r'<h2 class="title">(?P<name>.*?)</h2>', re.S)
     downloader_path = config()
     show_anime_lists = []
-    finish_names = []
+    finish_anime_urls = []
     renew = []
     cout = 0
+    today_date = get_today_date()
 
     main()
-    for i in range(61):
+    for i in range(91):
         print(f'程序运行完毕将在 {90 - i} 秒后自动关闭', end='')
         time.sleep(1)
         print('\r', end='', flush=True)
