@@ -1,3 +1,4 @@
+import contextlib
 import re
 import requests
 from concurrent.futures import ThreadPoolExecutor
@@ -9,15 +10,13 @@ head = {
 
 
 def config():  # 拿到下载器的地址
-    path = (os.getcwd() + r'\异世界动漫网下载器.exe')
     # print(path)
     # os.startfile(path)
-    return path
+    return os.getcwd() + r'\异世界动漫网下载器.exe'
 
 
 def get_today_date():
-    today_date = time.strftime('%m-%d')
-    return today_date
+    return time.strftime('%m-%d')
 
 
 def get_links():
@@ -32,31 +31,32 @@ def get_links():
 
 
 def finish_anime_name_link():
-    if len(finish_anime_urls) != 0:
-        show_finish_list = '\n'.join(finish_anime_urls)
-        delete = input(f'{show_finish_list}\n\n这 {len(finish_anime_urls)} 部 已完结是否要删除(y or n)')
-        if delete == 'y':
-            with open(file, 'r', encoding='utf-8') as f, open('./anime1.txt', 'w', encoding='utf-8') as f1:
-                for line in f.readlines():
-                    if line != '\n':
-                        # a = line.split('?')
-                        if line.split('?')[1].replace('\n',
-                                                      '') not in finish_anime_urls:  # 把每一行和要删的列表进行匹配，如果没匹配到就写入,匹配到就输出
-                            f1.write(line)
-                        else:
-                            show_link = line.replace('?', ' ').replace('.html', '').replace('\n', '') + '.html'
-                            print(show_link)
-                            copy_link = line.split('?')[1].replace('.html', '').replace('\n', '').replace('detail',
-                                                                                                          'play') \
-                                        + '/sid/1/nid/1.html'  # 第一集的链接
-                            # print(show_link)
-                            # time.sleep(0.6)
-                            # pyperclip.copy(copy_link)
-                            with open('下载队列.txt', 'a+') as f:
-                                f.write(f'\n{copy_link}\n')
-            os.remove(file)
-            os.rename('./anime1.txt', file)
-            os.startfile(downloader_path)
+    if len(finish_anime_urls) == 0:
+        return
+    show_finish_list = '\n'.join(finish_anime_urls)
+    delete = input(f'{show_finish_list}\n\n这 {len(finish_anime_urls)} 部 已完结是否要删除(y or n)')
+    if delete == 'y':
+        with open(file, 'r', encoding='utf-8') as f, open('./anime1.txt', 'w', encoding='utf-8') as f1:
+            for line in f.readlines():
+                if line != '\n':
+                    # a = line.split('?')
+                    if line.split('?')[1].replace('\n',
+                                                  '') not in finish_anime_urls:  # 把每一行和要删的列表进行匹配，如果没匹配到就写入,匹配到就输出
+                        f1.write(line)
+                    else:
+                        show_link = line.replace('?', ' ').replace('.html', '').replace('\n', '') + '.html'
+                        print(show_link)
+                        copy_link = line.split('?')[1].replace('.html', '').replace('\n', '').replace('detail',
+                                                                                                      'play') \
+                                    + '/sid/1/nid/1.html'  # 第一集的链接
+                        # print(show_link)
+                        # time.sleep(0.6)
+                        # pyperclip.copy(copy_link)
+                        with open('下载队列.txt', 'a+') as f:
+                            f.write(f'\n{copy_link}\n')
+        os.remove(file)
+        os.rename('./anime1.txt', file)
+        os.startfile(downloader_path)
 
 
 def show_anime_list():
@@ -72,15 +72,14 @@ def write_renew(txt):
         f.seek(0, 0)
         lines = f.readlines()
         file_long = len(lines)
-        w = open(file, 'w', encoding='utf-8')
-        for line in lines:
-            if line.replace('\n', '') == today_date:
-                break
-            else:
-                w.write(line)
-        w.write(txt)
-        w.write('-' * 80 + '\n')
-        w.close()
+        with open(file, 'w', encoding='utf-8') as w:
+            for line in lines:
+                if line.replace('\n', '') == today_date:
+                    break
+                else:
+                    w.write(line)
+            w.write(txt)
+            w.write('-' * 80 + '\n')
         del_than_max()
 
 
@@ -117,8 +116,9 @@ def get_url_from_map(local_urls):
     url = 'https://www.ysjdm.net/index.php/map/index.html'
     resp = requests.get(url, headers=head, timeout=3).text
     obj_today_anime = re.compile(
-        rf'<li class="ranklist_item">.*?<a title="(?P<title>.*?)".href="(?P<url>.*?)">.*?<p><span class="vodlist_sub">状态：(?P<cnt>.*?)</span></p>',
+        '<li class="ranklist_item">.*?<a title="(?P<title>.*?)".href="(?P<url>.*?)">.*?<p><span class="vodlist_sub">状态：(?P<cnt>.*?)</span></p>',
         re.S)
+
     obj_data = re.compile('<em>(?P<data>.*?)</em></span>')
     gets = obj_today_anime.finditer(resp)
     datas = obj_data.finditer(resp)
@@ -136,8 +136,7 @@ def get_url_from_map(local_urls):
                 finish_anime_urls.append(link)  # 加入列表的是网站里的链接
             if data == today_date:
                 renew.append(f'{cnt}\t{title}')
-    other_need_asks = set(local_urls) - set(web_list)
-    return other_need_asks
+    return set(local_urls) - set(web_list)
 
 
 def get_all_And_add_finish(url, name_d):
@@ -167,7 +166,7 @@ def main():
 
     count_retry = 1
     while 1:
-        try:
+        with contextlib.suppress(RuntimeError):
             cout, renew, finish_anime_urls, show_anime_lists = 0, [], [], []
             start = time.time()
             other_links = get_url_from_map(links)  # 从最近更新页面获取
@@ -182,13 +181,11 @@ def main():
                 count_retry += 1
                 raise
             break
-        except RuntimeError:
-            pass
     show_anime_list()
     print(f'\n共 {len(names)} 部\n')
     show_renew()  # 展示renew列表
     finish = time.time()
-    print('查询耗时' + str(round((finish - start), 1)) + 's\n')
+    print(f'查询耗时{str(round((finish - start), 1))}' + 's\n')
     finish_anime_name_link()
 
 

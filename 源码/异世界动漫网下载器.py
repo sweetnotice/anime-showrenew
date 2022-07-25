@@ -1,5 +1,7 @@
+import contextlib
 import os
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor
 import requests
 import winsound
@@ -31,13 +33,11 @@ def mkdir(path):  # 创建文件夹
     import os
     path = path.strip()
     path = path.rstrip("\\")
-    isExists = os.path.exists(path)
-    if not isExists:
-        os.makedirs(path)
-        print(path + ' 创建成功')
-        return True
-    else:
+    if isExists := os.path.exists(path):
         return False
+    os.makedirs(path)
+    print(f'\n{path} 创建成功\n')
+    return True
 
 
 def config():
@@ -55,32 +55,33 @@ def config():
         if len(download_path) == 0:
             download_path = False
     with open('下载队列.txt', 'r', encoding='utf-8') as f:
-        download_list = []
         lines = f.readlines()
-        for line in lines:
-            if line.find('https://www.ysjdm.net/') != -1:
-                download_list.append(line.replace('\n', ''))
+        download_list = [line.replace('\n', '') for line in lines if line.find('https://www.ysjdm.net/') != -1]
+
     return download_path, thread, download_list
 
 
 def download(url, name):
-    count = 0
-    while 1:
+    global anime_state
+    for _ in range(10):
         try:
             with open(name, 'wb') as f:
                 f.write(requests.get(url, timeout=2).content)
+                print(f'{name}下载完毕\n', end='')
                 break
         except requests.exceptions.RequestException:
-            count += 1
-            print(f'{name} 下载失败，进行第 {count} 次重试')
-    print(f'{name}下载完毕\n', end='')
+            print(f'{name} 下载失败，进行第 {_} 次重试')
+            if _ == 9:
+                anime_state = False
+                name = name.split('\\')[-2]
+                print(f' {name} 链接超时！！！')
 
 
 def pa(url, i):
     global state, tt, all_tt, download_path
     if state == 0:
-        while 1:
-            try:
+        while anime_state:
+            with contextlib.suppress(requests.exceptions.RequestException):
                 ual = url + str(i)
                 rest = requests.get(ual, timeout=2)
                 rest.encoding = "utf-8"
@@ -98,9 +99,9 @@ def pa(url, i):
                             name = "第" + name.split("第")[1]
                         video_file = film + '\\' + name  # 'E:\番\彩绿\彩绿第5集BD'
                         if ".m3u8" in link:
-                            video_file = video_file + '.m3u8'
+                            video_file = f'{video_file}.m3u8'
                         elif ".mp4" in link:
-                            video_file = video_file + '.mp4'
+                            video_file = f'{video_file}.mp4'
                         download(link, video_file)
                         tt += 1
                     else:
@@ -110,35 +111,37 @@ def pa(url, i):
                     state += 1
                 rest.close()
                 break
-            except requests.exceptions.RequestException:
-                pass
 
 
 def change_url(url: str):  # 把用户输入的详情页链接转换成第一集的
-    if url.find('detail') != -1:
+    if 'detail' in url:
         url = url.replace('detail', 'play').replace('.html', '') + '/sid/1/nid/1.html'
     return url
 
 
 def launcher():
     print(f'视频下载路径为   {first_dir}\n下载线程为   {thread}')
+    global state, anime_state
     if len(download_lists) == 0:
         while 1:
             baseurl = input("\n---------在下方输入下载链接---------\n").strip()
             if len(baseurl) == 0:
                 return
             t = set_t()
+            state, anime_state = 0, True
             main(baseurl, t)
             winsound.MessageBeep(100)
     else:
-        global state
         for baseurl in download_lists:  # 队列下载
             t = 1
-            state = 0
+            state, anime_state = 0, True
             main(baseurl, t)
         with open('下载队列.txt', 'w') as f:
             pass
         winsound.MessageBeep(100)
+
+        f = time.time()
+        print(f'\n总耗时 {round(f - s)} 秒')
         i = input('队列全部下载完成！！！')
 
 
@@ -153,7 +156,7 @@ def main(baseurl, t):
             f.submit(pa, url, i)
     # for i in range(t,40):
     #     pa(url,i)
-    if tt != 0:
+    if tt != 0 and anime_state == True:
         print(f'\n获取文件完成一共 {tt}/{all_tt} 个视频\n即有 {all_tt - tt} 个 PV & SP')
         m3u8_downloader.main(download_path, thread)
     else:
@@ -161,14 +164,16 @@ def main(baseurl, t):
 
 
 if __name__ == '__main__':
+    s = time.time()
     download_path = ''
     config = config()
     first_dir, thread, download_lists = config[0], config[1], config[2]  # 从config文件中拿到 下载路径 , m3u8下载线程,下载列表
-
-    state = 0
+    anime_state = True  # 网站番剧链接超时
+    state = 0  # 有多少集
     all_tt = 0
     tt = 0  # 实际下载的视频数量
     if first_dir:
         launcher()
     else:
         input('请检查 config 里的 路径是否正确！！！')
+
