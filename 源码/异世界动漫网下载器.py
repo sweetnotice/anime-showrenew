@@ -130,18 +130,20 @@ def launcher():
             t = set_t()
             state, anime_state = 0, True
             main(baseurl, t)
+            f = time.time()
+            print(f'\n总耗时 {round(f - s) // 60}分:{round(f - s) % 60}秒')
+            print(f'平均一集耗时 {round((f - s) / tt // 60)}分:{round((f - s) / tt % 60)}秒')
             winsound.MessageBeep(100)
     else:
         for baseurl in download_lists:  # 队列下载
-            t = 1
             state, anime_state = 0, True
-            main(baseurl, t)
+            main(baseurl, 1)
         with open('下载队列.txt', 'w') as f:
             pass
-        winsound.MessageBeep(100)
-
         f = time.time()
-        print(f'\n总耗时 {round(f - s)} 秒')
+        print(f'\n总耗时 {round(f - s) // 60}分:{round(f - s) % 60}秒')
+        print(f'平均一集耗时 {round((f - s) / tt // 60)}分:{round((f - s) / tt % 60)}秒')
+        winsound.MessageBeep(100)
         i = input('队列全部下载完成！！！')
 
 
@@ -176,4 +178,3 @@ if __name__ == '__main__':
         launcher()
     else:
         input('请检查 config 里的 路径是否正确！！！')
-
