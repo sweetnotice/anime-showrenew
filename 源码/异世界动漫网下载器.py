@@ -142,7 +142,7 @@ def launcher():
             pass
         f = time.time()
         print(f'\n总耗时 {round(f - s) // 60}分:{round(f - s) % 60}秒')
-        print(f'平均一集耗时 {round((f - s) / tt // 60)}分:{round((f - s) / tt % 60)}秒')
+        print(f'平均一部耗时 {round((f - s) / len(download_lists) // 60)}分:{round((f - s) / len(download_lists) % 60)}秒')
         winsound.MessageBeep(100)
         i = input('队列全部下载完成！！！')
 
